@@ -1,0 +1,7 @@
+C:\SignalsAndContext\Main\Monza\Source\Libraries\DotNetExtensions\DotNetExtensionsTestProject1\bin\Debug\DotNetExtensionsTestProject1.dll
+C:\SignalsAndContext\Main\Monza\Source\Libraries\DotNetExtensions\DotNetExtensionsTestProject1\bin\Debug\DotNetExtensionsTestProject1.pdb
+C:\SignalsAndContext\Main\Monza\Source\Libraries\DotNetExtensions\DotNetExtensionsTestProject1\bin\Debug\DotNetExtensions.dll
+C:\SignalsAndContext\Main\Monza\Source\Libraries\DotNetExtensions\DotNetExtensionsTestProject1\bin\Debug\DotNetExtensions.pdb
+C:\SignalsAndContext\Main\Monza\Source\Libraries\DotNetExtensions\DotNetExtensionsTestProject1\obj\Debug\ResolveAssemblyReference.cache
+C:\SignalsAndContext\Main\Monza\Source\Libraries\DotNetExtensions\DotNetExtensionsTestProject1\obj\Debug\DotNetExtensionsTestProject1.dll
+C:\SignalsAndContext\Main\Monza\Source\Libraries\DotNetExtensions\DotNetExtensionsTestProject1\obj\Debug\DotNetExtensionsTestProject1.pdb
