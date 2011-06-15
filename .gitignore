@@ -6,3 +6,4 @@ bin/
 obj/
 Build/
 _ReSharper.*/
+TestResults/

@@ -136,7 +136,7 @@ namespace Monza.DotNetExtensions
                         // with a propagator that UNCONDITIONALLY puts the kvp in 
                         // the dictionary, and reports whether the key was already
                         // present . . .
-                        propagator: dict => Tuple.Create(dict
+                        propagator: dict => ValueStatePair.Create(dict
                             // via the Maybe monad . . .
                             .TryGetValue(kvp.Key)
                             // if the value was not in the dictionary, add it . . .
@@ -152,7 +152,7 @@ namespace Monza.DotNetExtensions
                 // Apply the newly bound state to the input dictionary . . .
                 .Propagator(theDictionary)
                 // Extract the dictionary from the tuple and return it:
-                .Item2
+                .State
                 ;
 
             // Sadly, the bool info about whether the key was in the dictionary
@@ -204,7 +204,7 @@ namespace Monza.DotNetExtensions
                         // with a propagator that CONDITIONALLY puts the kvp in 
                         // the dictionary, and reports whether the key was already
                         // present . . .
-                        propagator: dict => Tuple.Create(dict
+                        propagator: dict => ValueStatePair.Create(dict
                             // via the Maybe monad . . .
                             .TryGetValue(kvp.Key)
                             // if the value was not in the dictionary, add it . . .
@@ -218,7 +218,7 @@ namespace Monza.DotNetExtensions
                 // Apply the newly bound state to the input dictionary . . .
                 .Propagator(theDictionary)
                 // Extract the dictionary from the tuple and return it:
-                .Item2
+                .State
                 ;
 
             // Sadly, the info about whether the key was in the dictionary
