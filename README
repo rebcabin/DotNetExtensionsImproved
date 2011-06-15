@@ -2,7 +2,7 @@ This repository contains some dot net extensions to the dictionary type,
 some numerical convenience functions, a couple of combinators for ArgMax.
 
 People to whom I am indebted are acknowledge in comments in the code, but
-include Jordan E. Terrel (see his extensive iSynaptic project in GitHub),
+include Jordan E. Terrell (see his extensive iSynaptic project in GitHub),
 and Daniel Moore via northhorizon.net. 
 
 Licenses invoked include the MIT license and the Creative-Commons 
