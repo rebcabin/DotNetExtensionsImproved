@@ -144,7 +144,7 @@ namespace Monza.DotNetExtensions
                             // if the value was in the dictionary, replace it . . .
                             .OnValue(_ => dict[kvp.Key] = kvp.Value)
                             // be thread-safe . . .
-                            .SynchronizeWith(dict)
+                            .Synchronize(dict)
                             // provide the bool . . .
                             .HasValue,
                             // and the original dictionary.
@@ -210,7 +210,7 @@ namespace Monza.DotNetExtensions
                             // if the value was not in the dictionary, add it . . .
                             .OnNoValue(() => dict.Add(key: kvp.Key, value: kvp.Value))
                             // be thread safe . . .
-                            .SynchronizeWith(dict)
+                            .Synchronize(dict)
                             // provide the bool . . .
                             .HasValue, 
                             // and the original dictionary.

@@ -79,7 +79,7 @@ namespace Monza.DotNetExtensions.iSynaptic
         public Maybe(Exception exception)
             : this()
         {
-            _Exception = exception;// Guard.NotNull(exception, "exception");
+            _Exception = exception; //Guard.NotNull(exception, "exception");
         }
 
         public T Value
@@ -89,7 +89,7 @@ namespace Monza.DotNetExtensions.iSynaptic
                 if (_Computation == null)
                 {
                     if (_Exception != null)
-                        throw new InvalidOperationException("No value can be computed.", _Exception);
+                        throw new InvalidOperationException("No value can be computed.", _Exception);//.ThrowAsInnerExceptionIfNeeded();
 
                     if (_HasValue != true)
                         throw new InvalidOperationException("No value can be computed.");
@@ -160,6 +160,9 @@ namespace Monza.DotNetExtensions.iSynaptic
 
             if (obj is Maybe<T>)
                 return Equals((Maybe<T>)obj);
+
+            if (obj is T)
+                return Equals(new Maybe<T>((T)obj));
 
             return false;
         }
@@ -234,12 +237,6 @@ namespace Monza.DotNetExtensions.iSynaptic
             });
         }
 
-        public Maybe<TResult> Extend<TResult>(Func<Maybe<T>, TResult> func)
-        {
-            //Guard.NotNull(func, "func");
-            return Express(x => new Maybe<TResult>(func(x)));
-        }
-
         public Maybe<TResult> Express<TResult>(Func<Maybe<T>, Maybe<TResult>> func)
         {
             //Guard.NotNull(func, "func");
@@ -266,14 +263,15 @@ namespace Monza.DotNetExtensions.iSynaptic
 
     public static class Maybe
     {
-        #region Return Operator
+        #region Defer Operator
 
-        public static Maybe<T> Return<T>(T value)
+        public static Maybe<T> Defer<T>(Func<T> computation)
         {
-            return new Maybe<T>(value);
+            //Guard.NotNull(computation, "computation");
+            return new Maybe<T>(computation);
         }
 
-        public static Maybe<T> Return<T>(Func<T> computation)
+        public static Maybe<T> Defer<T>(Func<Maybe<T>> computation)
         {
             //Guard.NotNull(computation, "computation");
             return new Maybe<T>(computation);
@@ -290,7 +288,8 @@ namespace Monza.DotNetExtensions.iSynaptic
 
         public static Maybe<T> NotNull<T>(Func<T> computation) where T : class
         {
-            return Return(computation).NotNull();
+            //Guard.NotNull(computation, "computation");
+            return Defer(computation).NotNull();
         }
 
         public static Maybe<T> NotNull<T>(T? value) where T : struct
@@ -300,7 +299,8 @@ namespace Monza.DotNetExtensions.iSynaptic
 
         public static Maybe<T> NotNull<T>(Func<T?> computation) where T : struct
         {
-            return Return(computation).NotNull();
+            //Guard.NotNull(computation, "computation");
+            return Defer(computation).NotNull();
         }
 
         public static Maybe<T> NotNull<T>(this Maybe<T> self) where T : class
@@ -310,7 +310,7 @@ namespace Monza.DotNetExtensions.iSynaptic
 
         public static Maybe<T> NotNull<T>(this Maybe<T?> self) where T : struct
         {
-            return self.Where(x => x.HasValue).Select(x => x.Value);
+            return self.NotNull(x => x).Select(x => x.Value);
         }
 
         public static Maybe<T> NotNull<T, TResult>(this Maybe<T> self, Func<T, TResult> selector) where TResult : class
@@ -328,14 +328,6 @@ namespace Monza.DotNetExtensions.iSynaptic
         #endregion
 
         #region Using Operator
-
-        public static Maybe<T> Using<T, TResource>(TResource resource, Func<TResource, Maybe<T>> selector) where TResource : IDisposable
-        {
-            //Guard.NotNull(resource, "resource");
-            //Guard.NotNull(selector, "selector");
-
-            return Using(() => resource, selector);
-        }
 
         public static Maybe<T> Using<T, TResource>(Func<TResource> resourceFactory, Func<TResource, Maybe<T>> selector) where TResource : IDisposable
         {
@@ -365,35 +357,33 @@ namespace Monza.DotNetExtensions.iSynaptic
         public static Maybe<TResult> Coalesce<T, TResult>(this Maybe<T> self, Func<T, TResult> selector) where TResult : class
         {
             //Guard.NotNull(selector, "selector");
-            return self.Coalesce(selector, () => Maybe<TResult>.NoValue);
+            return self.Coalesce(selector, Defer(() => Maybe<TResult>.NoValue));
         }
 
         public static Maybe<TResult> Coalesce<T, TResult>(this Maybe<T> self, Func<T, TResult?> selector) where TResult : struct
         {
             //Guard.NotNull(selector, "selector");
-            return self.Coalesce(selector, () => Maybe<TResult>.NoValue);
+            return self.Coalesce(selector, Defer(() => Maybe<TResult>.NoValue));
         }
 
-        public static Maybe<TResult> Coalesce<T, TResult>(this Maybe<T> self, Func<T, TResult> selector, Func<Maybe<TResult>> valueIfNullFactory) where TResult : class
+        public static Maybe<TResult> Coalesce<T, TResult>(this Maybe<T> self, Func<T, TResult> selector, Maybe<TResult> valueIfNull) where TResult : class
         {
             //Guard.NotNull(selector, "selector");
-            //Guard.NotNull(valueIfNullFactory, "valueIfNullFactory");
 
             return self
                 .Select(selector)
                 .NotNull()
-                .Or(valueIfNullFactory);
+                .Or(valueIfNull);
         }
 
-        public static Maybe<TResult> Coalesce<T, TResult>(this Maybe<T> self, Func<T, TResult?> selector, Func<Maybe<TResult>> valueIfNullFactory) where TResult : struct
+        public static Maybe<TResult> Coalesce<T, TResult>(this Maybe<T> self, Func<T, TResult?> selector, Maybe<TResult> valueIfNull) where TResult : struct
         {
             //Guard.NotNull(selector, "selector");
-            //Guard.NotNull(valueIfNullFactory, "valueIfNullFactory");
 
             return self
                 .Select(selector)
                 .NotNull()
-                .Or(valueIfNullFactory);
+                .Or(valueIfNull);
         }
 
         #endregion
@@ -425,11 +415,6 @@ namespace Monza.DotNetExtensions.iSynaptic
             return self.Or(() => value);
         }
 
-        public static Maybe<T> Or<T>(this Maybe<T> self, Maybe<T> other)
-        {
-            return self.Or(() => other);
-        }
-
         public static Maybe<T> Or<T>(this Maybe<T> self, Func<T> valueFactory)
         {
             //Guard.NotNull(valueFactory, "valueFactory");
@@ -439,7 +424,12 @@ namespace Monza.DotNetExtensions.iSynaptic
         public static Maybe<T> Or<T>(this Maybe<T> self, Func<Maybe<T>> valueFactory)
         {
             //Guard.NotNull(valueFactory, "valueFactory");
-            return self.Express(x => x.Exception == null && x.HasValue != true ? valueFactory() : x);
+            return self.Or(Defer(valueFactory));
+        }
+
+        public static Maybe<T> Or<T>(this Maybe<T> self, Maybe<T> other)
+        {
+            return self.Express(x => x.HasValue != true && x.Exception == null ? other : x);
         }
 
         #endregion
@@ -470,27 +460,15 @@ namespace Monza.DotNetExtensions.iSynaptic
 
         #region When Operator
 
-        public static Maybe<T> When<T>(this Maybe<T> self, T value, T newValue)
-        {
-            return self.When(value, x => newValue);
-        }
-
         public static Maybe<T> When<T>(this Maybe<T> self, T value, Action<T> action)
         {
             //Guard.NotNull(action, "action");
-            return self.When(x => x.Equals(value), x => { action(x); return x; });
+            return self.When(x => EqualityComparer<T>.Default.Equals(x, value), self.OnValue(action));
         }
 
-        public static Maybe<T> When<T>(this Maybe<T> self, T value, Func<T, Maybe<T>> computation)
+        public static Maybe<T> When<T>(this Maybe<T> self, T value, Maybe<T> newValue)
         {
-            //Guard.NotNull(computation, "computation");
-            return self.When(x => x.Equals(value), computation);
-        }
-
-        public static Maybe<T> When<T>(this Maybe<T> self, Func<T, bool> predicate, T newValue)
-        {
-            //Guard.NotNull(predicate, "predicate");
-            return self.When(predicate, x => newValue);
+            return self.When(x => EqualityComparer<T>.Default.Equals(x, value), newValue);
         }
 
         public static Maybe<T> When<T>(this Maybe<T> self, Func<T, bool> predicate, Action<T> action)
@@ -498,38 +476,63 @@ namespace Monza.DotNetExtensions.iSynaptic
             //Guard.NotNull(predicate, "predicate");
             //Guard.NotNull(action, "action");
 
-            return self.When(predicate, x => { action(x); return self; });
+            return self.When(predicate, self.OnValue(action));
         }
 
-        public static Maybe<T> When<T>(this Maybe<T> self, Func<T, bool> predicate, Func<T, Maybe<T>> computation)
+        public static Maybe<T> When<T>(this Maybe<T> self, Func<T, bool> predicate, Maybe<T> newValue)
         {
             //Guard.NotNull(predicate, "predicate");
-            //Guard.NotNull(computation, "computation");
 
-            return self
-                    .Where(predicate)
-                    .SelectMaybe(computation)
-                    .Or(self);
+            return self.SelectMaybe(x => predicate(x) ? newValue : x.ToMaybe());
         }
 
         #endregion
 
-        #region SuppressException Operator
+        #region Catch Operator
 
-        public static Maybe<T> SuppressException<T>(this Maybe<T> self, T value)
+        public static Maybe<T> Catch<T>(this Maybe<T> self)
         {
-            return self.SuppressException(ex => value);
+            return self.Catch(ex => true);
         }
 
-        public static Maybe<T> SuppressException<T>(this Maybe<T> self, Func<Exception, T> valueFactory)
+        public static Maybe<T> Catch<T>(this Maybe<T> self, Func<Exception, bool> exceptionPredicate)
         {
-            return self.SuppressException(ex => valueFactory(ex).ToMaybe());
+            //Guard.NotNull(exceptionPredicate, "exceptionPredicate");
+
+            return self.Express(x =>
+            {
+                try
+                {
+                    return x.Run();
+                }
+                catch (Exception ex)
+                {
+                    if (exceptionPredicate(ex))
+                        return new Maybe<T>(ex);
+
+                    throw;
+                }
+            });
         }
 
-        public static Maybe<T> SuppressException<T>(this Maybe<T> self, Func<Exception, Maybe<T>> handler)
+        #endregion
+
+        #region Suppress Operator
+
+        public static Maybe<T> Suppress<T>(this Maybe<T> self)
         {
-            //Guard.NotNull(handler, "handler");
-            return self.Express(x => x.Exception != null ? handler(x.Exception) : x);
+            return self.Express(x => x.Exception != null ? Maybe<T>.NoValue : x);
+        }
+
+        public static Maybe<T> Suppress<T>(this Maybe<T> self, T value)
+        {
+            return self.Suppress(ex => value);
+        }
+
+        public static Maybe<T> Suppress<T>(this Maybe<T> self, Func<Exception, T> valueFactory)
+        {
+            //Guard.NotNull(valueFactory, "valueFactory");
+            return self.Express(x => x.Exception != null ? valueFactory(x.Exception) : x);
         }
 
         #endregion
@@ -560,8 +563,9 @@ namespace Monza.DotNetExtensions.iSynaptic
         public static Maybe<T> ThrowOnNoValue<T>(this Maybe<T> self, Func<Exception> exceptionFactory)
         {
             //Guard.NotNull(exceptionFactory, "exceptionFactory");
-            return self
-                .ThrowOn(x => x.Exception == null && x.HasValue != true, x => exceptionFactory());
+            return self.ThrowOn(x => x.HasValue != true && x.Exception == null
+                ? exceptionFactory()
+                : null);
         }
 
         #endregion
@@ -576,13 +580,13 @@ namespace Monza.DotNetExtensions.iSynaptic
         public static Maybe<T> ThrowOnException<T>(this Maybe<T> self, Type exceptionType)
         {
             //Guard.NotNull(exceptionType, "exceptionType");
-            return self.ThrowOnException(x => exceptionType.IsAssignableFrom(x.GetType()));
+            return self.ThrowOnException(x => exceptionType.IsAssignableFrom(x.GetType()) ? x : null);
         }
 
-        public static Maybe<T> ThrowOnException<T>(this Maybe<T> self, Func<Exception, bool> predicate)
+        public static Maybe<T> ThrowOnException<T>(this Maybe<T> self, Func<Exception, Exception> exceptionSelector)
         {
-            //Guard.NotNull(predicate, "predicate");
-            return self.ThrowOn(x => x.Exception != null, x => x.Exception);
+            //Guard.NotNull(exceptionSelector, "exceptionSelector");
+            return self.ThrowOn(x => x.Exception != null ? exceptionSelector(x.Exception) : null);
         }
 
         #endregion
@@ -592,31 +596,19 @@ namespace Monza.DotNetExtensions.iSynaptic
         public static Maybe<T> ThrowOn<T>(this Maybe<T> self, T value, Exception exception)
         {
             //Guard.NotNull(exception, "exception");
-            return self.ThrowOn(value, x => exception);
+            return self.ThrowOn(x => x.Equals(value) ? exception : null);
         }
 
-        public static Maybe<T> ThrowOn<T>(this Maybe<T> self, T value, Func<Maybe<T>, Exception> exceptionFactory)
+        public static Maybe<T> ThrowOn<T>(this Maybe<T> self, Func<Maybe<T>, Exception> exceptionSelector)
         {
-            //Guard.NotNull(exceptionFactory, "exceptionFactory");
-            return self.ThrowOn(x => x.Equals(value), exceptionFactory);
-        }
-
-        public static Maybe<T> ThrowOn<T>(this Maybe<T> self, Func<Maybe<T>, bool> predicate, Exception exception)
-        {
-            //Guard.NotNull(exception, "exception");
-            //Guard.NotNull(predicate, "predicate");
-            return self.ThrowOn(predicate, x => exception);
-        }
-
-        public static Maybe<T> ThrowOn<T>(this Maybe<T> self, Func<Maybe<T>, bool> predicate, Func<Maybe<T>, Exception> exceptionFactory)
-        {
-            //Guard.NotNull(exceptionFactory, "exceptionFactory");
-            //Guard.NotNull(predicate, "predicate");
+            //Guard.NotNull(exceptionSelector, "exceptionSelector");
 
             return self.Express(x =>
             {
-                if (predicate(x))
-                    throw exceptionFactory(x);
+                var ex = exceptionSelector(x);
+
+                if (ex != null)
+                    throw ex;//.ThrowAsInnerExceptionIfNeeded();
 
                 return x;
             });
@@ -642,10 +634,32 @@ namespace Monza.DotNetExtensions.iSynaptic
         {
             //Guard.NotNull(selector, "selector");
             //Guard.NotNull(combiner, "combiner");
-            return self.Bind(x => selector(x).Bind(y => combiner(x, y).ToMaybe()));
+            return self.SelectMany(x => selector(x).SelectMany(y => combiner(x, y).ToMaybe()));
         }
 
         #endregion
+
+        public static Maybe<T> Return<T>(T value)
+        {
+            return new Maybe<T>(value);
+        }
+
+        public static Maybe<T> Throw<T>(Exception exception)
+        {
+            //Guard.NotNull(exception, "exception");
+            return new Maybe<T>((Func<T>)(() => { throw exception; }));
+        }
+
+        public static Maybe<T> If<T>(bool predicate, Maybe<T> thenValue, Maybe<T> elseValue)
+        {
+            return If(() => predicate, thenValue, elseValue);
+        }
+
+        public static Maybe<T> If<T>(Func<bool> predicate, Maybe<T> thenValue, Maybe<T> elseValue)
+        {
+            //Guard.NotNull(predicate, "predicate");
+            return Defer(() => predicate() ? thenValue : elseValue);
+        }
 
         // This is an alias of Bind and SelectMany.  Since SelectMany doesn't make sense (because there is at most one value),
         // the name SelectMaybe communicates better than Bind or SelectMany the semantics of the function.
@@ -653,6 +667,23 @@ namespace Monza.DotNetExtensions.iSynaptic
         {
             //Guard.NotNull(selector, "selector");
             return self.Bind(selector);
+        }
+
+        public static Maybe<T> Finally<T>(this Maybe<T> self, Action finallyAction)
+        {
+            //Guard.NotNull(finallyAction, "finallyAction");
+
+            return self.Express(x =>
+            {
+                try
+                {
+                    return x.Run();
+                }
+                finally
+                {
+                    finallyAction();
+                }
+            });
         }
 
         public static Maybe<T> OnValue<T>(this Maybe<T> self, Action<T> action)
@@ -683,25 +714,18 @@ namespace Monza.DotNetExtensions.iSynaptic
             //Guard.NotNull(handler, "handler");
             return self.Express(x =>
             {
-                if (x.Exception != null)
-                    handler(x.Exception);
-
-                return x;
-            });
-        }
-
-        public static Maybe<T> CatchExceptions<T>(this Maybe<T> self)
-        {
-            return self.Express(x =>
-            {
                 try
                 {
-                    return x.Run();
+                    if (x.Exception != null)
+                        handler(x.Exception);
                 }
                 catch (Exception ex)
                 {
-                    return new Maybe<T>(ex);
+                    handler(ex);
+                    throw;
                 }
+
+                return x;
             });
         }
 
@@ -714,7 +738,7 @@ namespace Monza.DotNetExtensions.iSynaptic
         public static Maybe<T> Unless<T>(this Maybe<T> self, Func<T, bool> predicate)
         {
             //Guard.NotNull(predicate, "predicate");
-            return self.Where(x => !predicate(x));
+            return self.SelectMaybe(x => predicate(x) ? Maybe<T>.NoValue : x);
         }
 
         public static Maybe<T> Assign<T>(this Maybe<T> self, ref T target)
@@ -727,8 +751,11 @@ namespace Monza.DotNetExtensions.iSynaptic
 
         public static Maybe<T> Run<T>(this Maybe<T> self, Action<T> action = null)
         {
+            // Calling HasValue forces evaluation of the Maybe<T>.
+            // Returning self in either code path allows additional
+            // operators to be invoked that are lazily evaluated.
             return self
-                .When(x => action != null, x => self.OnValue(action))
+                .When(x => action != null, self.Express(x => x.OnValue(action)))
                 .HasValue ? self : self;
         }
 
@@ -737,25 +764,23 @@ namespace Monza.DotNetExtensions.iSynaptic
             var task = Task.Factory.StartNew(() => self.Run(action), cancellationToken, taskCreationOptions,
                                              taskScheduler ?? TaskScheduler.Current);
 
-            return self.Express(x =>
-            {
-                task.Wait(cancellationToken);
-                return task.IsCanceled ? Maybe<T>.NoValue : task.Result;
-            });
+            return Return(task)
+                .OnValue(t => t.Wait(cancellationToken))
+                .SelectMaybe(t => t.IsCanceled ? Maybe<T>.NoValue : t.Result);
         }
 
         public static Maybe<T> Synchronize<T>(this Maybe<T> self)
         {
-            return SynchronizeWith(self, new object());
+            return Synchronize(self, new object());
         }
 
-        public static Maybe<T> SynchronizeWith<T>(this Maybe<T> self, object lockObject)
+        public static Maybe<T> Synchronize<T>(this Maybe<T> self, object gate)
         {
-            //Guard.NotNull(lockObject, "lockObject");
+            //Guard.NotNull(gate, "gate");
 
             Func<Maybe<T>> synchronizedComputation = () =>
             {
-                lock (lockObject)
+                lock (gate)
                 {
                     return self.Run();
                 }
@@ -811,6 +836,24 @@ namespace Monza.DotNetExtensions.iSynaptic
         public static Maybe<T> ToMaybe<T>(this T value)
         {
             return Return(value);
+        }
+
+        public static IEnumerable<T> ToEnumerable<T>(this Maybe<T> self)
+        {
+            if (self.HasValue)
+                yield return self.Value;
+        }
+
+        public static Maybe<T> AsMaybe<T>(this IMaybe<T> value)
+        {
+            //Guard.NotNull(value, "value");
+            return value.Cast<T>();
+        }
+
+        public static Maybe<object> AsMaybe(this IMaybe value)
+        {
+            //Guard.NotNull(value, "value");
+            return value.Cast<object>();
         }
     }
 }
