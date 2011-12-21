@@ -28,7 +28,7 @@ using System;
 using System.ComponentModel;
 using System.Diagnostics.Contracts;
 
-namespace Monza.DotNetExtensions
+namespace Experimental.DotNetExtensions
 {
     /// <summary>
     /// Encapsulates a propagator transform that combines a mutable state object 

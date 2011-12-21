@@ -31,7 +31,7 @@ using System.Diagnostics.Contracts;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Monza.DotNetExtensions.iSynaptic
+namespace Experimental.DotNetExtensions.iSynaptic
 {
     public struct Maybe<T> : IMaybe<T>, IEquatable<Maybe<T>>, IEquatable<T>
     {

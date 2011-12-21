@@ -1,9 +1,10 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Text;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Monza.DotNetExtensions;
+using Experimental.DotNetExtensions;
 using System.Collections;
 using System.Diagnostics;
 
@@ -109,14 +110,15 @@ namespace DotNetExtensionsTestProject1
             Assert.AreEqual(0, dict.Values.Count());
             Assert.AreEqual(0, dict.Keys.Count());
 
+            const int range = 1280;
             var kvps = Enumerable
-                .Range(0, 128)
+                .Range(0, range)
                 .Select(i => new KeyValuePair<int, string>(i, Convert.ToChar(i).ToString()))
                 ;
 
             dict = kvps.Aggregate(dict, (d, kvp) => d.AddConditionally(kvp));
 
-            Assert.AreEqual(128, dict.Count());
+            Assert.AreEqual(range, dict.Count());
 
             var cc = new CollectionComparer<KeyValuePair<int, string>>();
             Assert.IsTrue(cc.Equals(kvps, dict));
@@ -124,10 +126,10 @@ namespace DotNetExtensionsTestProject1
             CollectionAssert.AreEquivalent(kvps.ToList(), dict.ToList());
 
             kvps = Enumerable
-                .Range(0, 128)
+                .Range(0, range)
                 .Select(i => new KeyValuePair<int, string>(i, Convert.ToChar(3 * i + 7).ToString()))
                 ;
-            
+
             dict = kvps.Aggregate(dict, (d, kvp) => d.AddConditionally(kvp));
 
             CollectionAssert.AreNotEquivalent(kvps.ToList(), dict.ToList());
@@ -163,14 +165,15 @@ namespace DotNetExtensionsTestProject1
             Assert.AreEqual(0, dict.Values.Count());
             Assert.AreEqual(0, dict.Keys.Count());
 
+            const int range = 1280;
             var kvps = Enumerable
-                .Range(0, 128)
+                .Range(0, range)
                 .Select(i => new KeyValuePair<int, string>(i, Convert.ToChar(i).ToString()))
                 ;
 
             dict = kvps.Aggregate(dict, (d, kvp) => d.AddUnconditionally(kvp));
 
-            Assert.AreEqual(128, dict.Count());
+            Assert.AreEqual(range, dict.Count());
 
             var cc = new CollectionComparer<KeyValuePair<int, string>>();
             Assert.IsTrue(cc.Equals(kvps, dict));
@@ -178,7 +181,7 @@ namespace DotNetExtensionsTestProject1
             CollectionAssert.AreEquivalent(kvps.ToList(), dict.ToList());
 
             kvps = Enumerable
-                .Range(0, 128)
+                .Range(0, range)
                 .Select(i => new KeyValuePair<int, string>(i, Convert.ToChar(3 * i + 7).ToString()))
                 ;
 
@@ -190,83 +193,137 @@ namespace DotNetExtensionsTestProject1
         [TestMethod()]
         public void TestExPerf()
         {
-            AssertDictionaryInitialized();
-            TestDictionary.Clear();
-
-            var random = new Random();
             const int repetitions = 10000;
+            AssertDictionaryInitialized();
+
+            TestDictionary = new Dictionary<int, string>();
+            var random = new Random();
             var stopwatch = new Stopwatch();
             var kvps = Enumerable
-                .Range(0, repetitions).Select(_ => random.Next())
-                .Select(i => new KeyValuePair<int, string>(i, 
+                .Range(0, repetitions)
+                .Select(_ => random.Next())
+                .Select(i => new KeyValuePair<int, string>(
+                    i,
                     i.GetHashCode().ToString()))
                 .ToList()
                 ;
 
+
+
             stopwatch.Start();
+            
+            
+            
             var dict = kvps.Aggregate(
-                TestDictionary as IDictionary<int, string>, 
-                (d, kvp) => 
-                    d.AddUnconditionally(kvp));
-            stopwatch.Stop();
-            var ticks = stopwatch.ElapsedTicks;
-
-            Trace.WriteLine(string.Format(
-                "DICTIONARY PERF: Milliseconds to insert {0} items = {1} monadically",
-                repetitions,
-                Math.Round(ticks / 1.0e4, 3)));
-
-
-            var dict1 = dict.ToList();
-
-            dict.Clear();
-            stopwatch.Start();
-            foreach (var kvp in kvps)
-                dict[kvp.Key]= kvp.Value;
-            stopwatch.Stop();
-            ticks = stopwatch.ElapsedTicks;
-
-            Trace.WriteLine(string.Format(
-                "DICTIONARY PERF: Milliseconds to insert {0} items = {1} NON-monadically",
-                repetitions,
-                Math.Round(ticks / 1.0e4, 3)));
-
-            var dict2 = dict.ToList();
-
-            CollectionAssert.AreEquivalent(dict1, dict2);
-
-            dict.Clear();
-            stopwatch.Start();
-            dict = kvps.Aggregate(
                 TestDictionary as IDictionary<int, string>,
-                (d, kvp) =>
-                    d.AddConditionally(kvp));
-            stopwatch.Stop();
-            ticks = stopwatch.ElapsedTicks;
+                (d, kvp) => d.AddUnconditionally(kvp));
+            Trace.WriteLine(string.Format(
+                "MONADIC UNCONDITIONAL DICTIONARY COUNT: {0}",
+                dict.Count()));
+            var dict1 = dict.ToList();
+            var ticks = stopwatch.ElapsedTicks;
+            
+            
+            
+            stopwatch.Reset();
+
+
 
             Trace.WriteLine(string.Format(
-                "DICTIONARY PERF: Milliseconds to insert {0} items = {1} monadically",
+                "MONADIC UNCONDITIONAL DICTIONARY PERF: Milliseconds to insert {0} items = {1} monadically",
                 repetitions,
                 Math.Round(ticks / 1.0e4, 3)));
 
-            dict1 = dict.ToList();
 
-            dict.Clear();
+
+            dict = new Dictionary<int, string>();
             stopwatch.Start();
+            
+            
+            
             foreach (var kvp in kvps)
                 dict[kvp.Key] = kvp.Value;
-            stopwatch.Stop();
+            Trace.WriteLine(string.Format(
+                "NON-MONADIC UNCONDITIONAL DICTIONARY COUNT: {0}",
+                dict.Count()));
+            var dict2 = dict.ToList();
             ticks = stopwatch.ElapsedTicks;
 
+
+            
+            stopwatch.Reset();
+
+
+
             Trace.WriteLine(string.Format(
-                "DICTIONARY PERF: Milliseconds to insert {0} items = {1} NON-monadically",
+                "NON-MONADIC UNCONDITIONAL DICTIONARY PERF: Milliseconds to insert {0} items = {1} NON-monadically",
                 repetitions,
                 Math.Round(ticks / 1.0e4, 3)));
 
-            dict2 = dict.ToList();
 
             CollectionAssert.AreEquivalent(dict1, dict2);
-        }   
+
+
+            
+            dict = new Dictionary<int, string>();
+            stopwatch.Start();
+
+
+
+            dict = kvps.Aggregate(
+                TestDictionary as IDictionary<int, string>,
+                (d, kvp) => d.AddConditionally(kvp));
+            Trace.WriteLine(string.Format(
+                "MONADIC CONDITIONAL DICTIONARY COUNT: {0}",
+                dict.Count()));
+            dict1 = dict.ToList();
+            ticks = stopwatch.ElapsedTicks;
+
+
+
+            stopwatch.Reset();
+
+
+
+            Trace.WriteLine(string.Format(
+                "MONADIC CONDITIONAL DICTIONARY PERF: Milliseconds to insert {0} items = {1} monadically",
+                repetitions,
+                Math.Round(ticks / 1.0e4, 3)));
+
+
+
+            dict = new Dictionary<int, string>();
+            stopwatch.Start();
+
+
+
+            foreach (var kvp in kvps)
+            {
+                string value;
+                if (!dict.TryGetValue(kvp.Key, out value))
+                    dict[kvp.Key] = kvp.Value;
+            }
+            Trace.WriteLine(string.Format(
+                "NON-MONADIC CONDITIONAL DICTIONARY COUNT: {0}",
+                dict.Count()));
+            dict2 = dict.ToList();
+            ticks = stopwatch.ElapsedTicks;
+
+            
+
+            stopwatch.Reset();
+
+
+
+            Trace.WriteLine(string.Format(
+                "NON-MONADIC CONDITIONAL DICTIONARY PERF: Milliseconds to insert {0} items = {1} NON-monadically",
+                repetitions,
+                Math.Round(ticks / 1.0e4, 3)));
+
+
+
+            CollectionAssert.AreEquivalent(dict1, dict2);
+        }
     }
 
     public class CollectionComparer<T> : IEqualityComparer<IEnumerable<T>>
@@ -310,7 +367,7 @@ namespace DotNetExtensionsTestProject1
             return false;
         }
         private static Dictionary<T, int> GetElementTally(
-            IEnumerable<T> enumerable, 
+            IEnumerable<T> enumerable,
             out int nullTally)
         {
             var dictionary = new Dictionary<T, int>();
@@ -323,9 +380,9 @@ namespace DotNetExtensionsTestProject1
                 }
                 else
                 {
-                    int num; 
+                    int num;
                     dictionary.TryGetValue(element, out num);
-                    num++; 
+                    num++;
                     dictionary[element] = num;
                 }
             }

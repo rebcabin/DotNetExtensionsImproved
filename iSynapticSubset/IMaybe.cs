@@ -28,7 +28,7 @@ using System;
 
 // Adapted under terms of the MIT attribution-only license from Jordan E. Terrell.
 
-namespace Monza.DotNetExtensions.iSynaptic
+namespace Experimental.DotNetExtensions.iSynaptic
 {
     public interface IMaybe<out T> : IMaybe
     {

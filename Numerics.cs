@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Diagnostics.Contracts;
-using Monza.DotNetExtensions.iSynaptic;
+using Experimental.DotNetExtensions.iSynaptic;
 
-namespace Monza.DotNetExtensions
+namespace Experimental.DotNetExtensions
 {
     public struct DoubleComponents
     {

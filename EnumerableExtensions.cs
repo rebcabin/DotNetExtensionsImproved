@@ -32,13 +32,19 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 
-namespace Monza.DotNetExtensions
+namespace Experimental.DotNetExtensions
 {
     /// <summary>
     /// Provides extension methods for <see cref="IEnumerable{T}"/> and <see cref="IEnumerable"/>.
     /// </summary>
     public static class IEnumerable
     {
+        /// <summary>
+        /// The standard monadic "Return" operation.
+        /// </summary>
+        /// <typeparam name="T">The type of the thing to lift into the monad.</typeparam>
+        /// <param name="singleValue">The sone value to lift into the monad.</param>
+        /// <returns>An IEnumerable containing a single item of type T.</returns>
         public static IEnumerable<T> Return<T>(this T singleValue)
         {
             return new[] { singleValue } as IEnumerable<T>;

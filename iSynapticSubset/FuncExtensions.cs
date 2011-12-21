@@ -28,7 +28,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 
-namespace Monza.DotNetExtensions.iSynaptic
+namespace Experimental.DotNetExtensions.iSynaptic
 {
     public static partial class FuncExtensions
     {
