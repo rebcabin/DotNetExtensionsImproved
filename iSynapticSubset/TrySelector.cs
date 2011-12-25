@@ -25,19 +25,12 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 using System;
-
-// Adapted under terms of the MIT attribution-only license from Jordan E. Terrell.
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
 namespace Experimental.DotNetExtensions.iSynaptic
 {
-    public interface IMaybe<out T> : IMaybe
-    {
-        new T Value { get; }
-    }
-
-    public interface IMaybe
-    {
-        object Value { get; }
-        bool HasValue { get; }
-    }
+    public delegate bool TrySelector<TResult>(out TResult result);
+    public delegate bool TrySelector<in T, TResult>(T input, out TResult result);
 }
