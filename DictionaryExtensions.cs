@@ -27,9 +27,10 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using Monza.DotNetExtensions.iSynaptic;
+using System.Linq;
+using Experimental.DotNetExtensions.iSynaptic;
 
-namespace Monza.DotNetExtensions
+namespace Experimental.DotNetExtensions
 {
     /// <summary>
     /// Extensions to the IDictionary interface, supporting chainable dictionary combinators.
@@ -100,7 +101,7 @@ namespace Monza.DotNetExtensions
             this IDictionary<K, V> theDictionary,
             K key)
         {
-            Contract.Requires(null != theDictionary, "theDictionary");
+            //Contract.Requires(null != theDictionary, "theDictionary");
 
             V retreived = default(V);
 
@@ -124,6 +125,10 @@ namespace Monza.DotNetExtensions
         {
             Contract.Requires(theDictionary != null);
 
+#if (false)
+            theDictionary[keyValuePair.Key] = keyValuePair.Value;
+            return theDictionary;
+#else
             // Take the kvp . . .
             return keyValuePair
                 // Bring it into the state monad with the IDictionary as state
@@ -136,7 +141,9 @@ namespace Monza.DotNetExtensions
                         // with a propagator that UNCONDITIONALLY puts the kvp in 
                         // the dictionary, and reports whether the key was already
                         // present . . .
+#if (true)
                         propagator: dict => ValueStatePair.Create(dict
+                        // TODO: Investigate intermittent stress failure of the Maybe monad!
                             // via the Maybe monad . . .
                             .TryGetValue(kvp.Key)
                             // if the value was not in the dictionary, add it . . .
@@ -149,6 +156,15 @@ namespace Monza.DotNetExtensions
                             .HasValue,
                             // and the original dictionary.
                             dict)))
+#else
+                        propagator: dict =>
+                        {
+                            var value = default(V);
+                            var hasValue = dict.TryGetValue(kvp.Key, out value);
+                            dict[kvp.Key] = kvp.Value;
+                            return Tuple.Create(hasValue, dict);
+                        }))
+#endif
                 // Apply the newly bound state to the input dictionary . . .
                 .Propagator(theDictionary)
                 // Extract the dictionary from the tuple and return it:
@@ -157,6 +173,7 @@ namespace Monza.DotNetExtensions
 
             // Sadly, the bool info about whether the key was in the dictionary
             // is lost, the price we pay to thread the dictionary out. 
+#endif
         }
 
         /// <summary>
@@ -192,6 +209,14 @@ namespace Monza.DotNetExtensions
         {
             Contract.Requires(theDictionary != null);
 
+#if (false)
+            var value = default(V);
+            var hasValue = theDictionary.TryGetValue(kvpInput.Key, out value);
+            if (!hasValue)
+                theDictionary[kvpInput.Key] = kvpInput.Value;
+            return theDictionary;
+#else
+
             // Take the kvp . . .
             return kvpInput
                 // Bring it into the state monad with the IDictionary as state
@@ -204,7 +229,9 @@ namespace Monza.DotNetExtensions
                         // with a propagator that CONDITIONALLY puts the kvp in 
                         // the dictionary, and reports whether the key was already
                         // present . . .
+#if (true)
                         propagator: dict => ValueStatePair.Create(dict
+                        // TODO: investigate failure of the Maybe monad!
                             // via the Maybe monad . . .
                             .TryGetValue(kvp.Key)
                             // if the value was not in the dictionary, add it . . .
@@ -215,6 +242,16 @@ namespace Monza.DotNetExtensions
                             .HasValue, 
                             // and the original dictionary.
                             dict)))
+#else
+                        propagator: dict =>
+                        {
+                            var value = default(V);
+                            var hasValue = dict.TryGetValue(kvp.Key, out value);
+                            if (!hasValue)
+                                dict[kvp.Key] = kvp.Value;
+                            return Tuple.Create(hasValue, dict);
+                        }))
+#endif
                 // Apply the newly bound state to the input dictionary . . .
                 .Propagator(theDictionary)
                 // Extract the dictionary from the tuple and return it:
@@ -223,6 +260,7 @@ namespace Monza.DotNetExtensions
 
             // Sadly, the info about whether the key was in the dictionary
             // is lost, the price we pay to thread the dictionary through. 
+#endif
         }
 
         public static IDictionary<K, V> AddConditionally<K, V>(
@@ -239,18 +277,92 @@ namespace Monza.DotNetExtensions
         /// Look up the value, and return the default of type 'Value' if the key is not present.
         /// </summary>
         /// <typeparam name="K">The type of keys.</typeparam>
-        /// <typeparam name="T">The type of values.</typeparam>
+        /// <typeparam name="V">The type of values.</typeparam>
         /// <param name="theDictionary">The dictionary in which to look up values.</param>
         /// <param name="key">They key to look up.</param>
         /// <returns>The value of type T corresponding to the key if the key is present in the dictionary, otherwise, the defined default value for the type T of all values.</returns>
         public static V GetValueOrDefault<K, V>(
             this IDictionary<K, V> theDictionary,
             K key)
+            where V : class
         {
             V result;
-            bool foundP = theDictionary.TryGetValue(key, out result);
+            var foundP = theDictionary.TryGetValue(key, out result);
+            Contract.Assert(foundP == true || result == null);
+            return result ?? default(V);
+        }
+
+        public static V GetValueOrDefaultValueType<K, V>(
+            this IDictionary<K, V> theDictionary,
+            K key)
+            where V : struct
+        {
+            V result;
+            var foundP = theDictionary.TryGetValue(key, out result);
             Contract.Assert(foundP == true || result.Equals(default(V)));
             return result; // lapses automatically to default(T) if TryGetValue returns false
+        }
+
+        /// <summary>
+        /// Look up the value, and return an empty IEnumerable of the specified type if the key is not present.
+        /// </summary>
+        /// <typeparam name="K">The type of keys.</typeparam>
+        /// <typeparam name="V">The type of values.</typeparam>
+        /// <param name="theDictionary">The dictionary in which to look up values.</param>
+        /// <param name="key">They key to look up.</param>
+        /// <returns>The value of type T corresponding to the key if the key is present in the dictionary, otherwise, an empty enumerable of V's.</returns>
+        public static IEnumerable<V> GetValueOrEmpty<K, V>(
+            this IDictionary<K, IEnumerable<V>> theDictionary,
+            K key)
+        {
+            IEnumerable<V> result;
+            var foundP = theDictionary.TryGetValue(key, out result);
+            Contract.Assert(foundP == true || result == null); // null is the default for IEnumerable
+            var result2 = result ?? Enumerable.Empty<V>();
+            return result2;
+        }
+
+        /// <summary>
+        /// Look up the value, and return the specified value if the key is not present.
+        /// </summary>
+        /// <typeparam name="K">The type of keys.</typeparam>
+        /// <typeparam name="V">The type of values.</typeparam>
+        /// <param name="theDictionary">The dictionary in which to look up values.</param>
+        /// <param name="key">They key to look up.</param>
+        /// <param name="specified">The specified value to return if the key is not present.</param>
+        /// <returns>The value of type T corresponding to the key if the key is present in the dictionary, otherwise, the specified value of type V.</returns>
+        public static V GetValueOrSpecified<K, V>(
+            this IDictionary<K, V> theDictionary,
+            K key,
+            V specified)
+            where V : class
+        {
+            V result;
+            var foundP = theDictionary.TryGetValue(key, out result);
+            Contract.Assert(foundP == true || result == null);
+            var result2 = result ?? specified;
+            return result2;
+        }
+
+        /// <summary>
+        /// Look up the value, and return the specified value if the key is not present.
+        /// </summary>
+        /// <typeparam name="K">The type of keys.</typeparam>
+        /// <typeparam name="V">The type of values.</typeparam>
+        /// <param name="theDictionary">The dictionary in which to look up values.</param>
+        /// <param name="key">They key to look up.</param>
+        /// <param name="specified">The specified value to return if the key is not present.</param>
+        /// <returns>The value of type T corresponding to the key if the key is present in the dictionary, otherwise, the specified value of type V.</returns>
+        public static V GetValueOrSpecifiedValueType<K, V>(
+            this IDictionary<K, V> theDictionary,
+            K key,
+            V specified)
+            where V : struct
+        {
+            V result;
+            var foundP = theDictionary.TryGetValue(key, out result);
+            Contract.Assert(foundP == true || result.Equals(default(V)));
+            return result;
         }
 
         /// <summary>
@@ -259,12 +371,24 @@ namespace Monza.DotNetExtensions
         /// <typeparam name="K">The type of keys.</typeparam>
         /// <param name="theDictionary">The dictionary in which to tally keys.</param>
         /// <param name="key">The key to tally.</param>
-        public static IDictionary<K,long> AccumulateTally<K>(
+        public static IDictionary<K, long> Tally<K>(
             this IDictionary<K, long> theDictionary,
             K key)
         {
-            long currentCount = theDictionary.GetValueOrDefault(key) + 1;
-            return theDictionary.AddUnconditionally(key, currentCount);
+            return theDictionary.AddUnconditionally(
+                key, 
+                theDictionary.GetValueOrDefaultValueType(key) + 1);
+        }
+
+        /// <summary>
+        /// (Overload that creates the dictionary) Increases the tally count for the given key in the dictionary..
+        /// </summary>
+        /// <typeparam name="K">The type of keys.</typeparam>
+        /// <param name="key">The key to tally.</param>
+        public static IDictionary<K, long> Tally<K>(
+            K key)
+        {
+            return IDictionary.Create(key, 1L);
         }
     }
 }

@@ -31,7 +31,7 @@ using System.Diagnostics.Contracts;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Monza.DotNetExtensions.iSynaptic
+namespace Experimental.DotNetExtensions.iSynaptic
 {
     // Implementation of the Maybe monad. http://en.wikipedia.org/wiki/Monad_%28functional_programming%29#Maybe_monad
     // Thanks to Brian Beckman for his suggestions and assistance.
