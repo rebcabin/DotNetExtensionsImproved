@@ -56,7 +56,7 @@ namespace Experimental.DotNetExtensions.iSynaptic
         public Maybe(Func<Maybe<T>> computation)
             : this()
         {
-            var cachedComputation = Guard.NotNull(computation, "computation");
+            var cachedComputation = computation; //Guard.NotNull(computation, "computation");
             var memoizedResult = default(Maybe<T>);
             var resultComputed = false;
 
@@ -121,7 +121,7 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public bool Equals(Maybe<T> other, IEqualityComparer<T> comparer)
         {
-            Guard.NotNull(comparer, "comparer");
+            //Guard.NotNull(comparer, "comparer");
 
             if (!HasValue)
                 return !other.HasValue;
@@ -147,7 +147,7 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public int GetHashCode(IEqualityComparer<T> comparer)
         {
-            Guard.NotNull(comparer, "comparer");
+            // Guard.NotNull(comparer, "comparer");
 
             return HasValue
                 ? comparer.GetHashCode(Value)
@@ -201,14 +201,14 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<T> Defer<T>(Func<T> computation)
         {
-            Guard.NotNull(computation, "computation");
+            //Guard.NotNull(computation, "computation");
 
             return new Maybe<T>(() => new Maybe<T>(computation()));
         }
 
         public static Maybe<T> Defer<T>(Func<T?> computation) where T : struct
         {
-            Guard.NotNull(computation, "computation");
+            //Guard.NotNull(computation, "computation");
 
             return new Maybe<T>(() => Return(computation()));
         }
@@ -234,13 +234,13 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<T> If<T>(Func<bool> predicate, Maybe<T> thenValue)
         {
-            Guard.NotNull(predicate, "predicate");
+            //Guard.NotNull(predicate, "predicate");
             return new Maybe<T>(() => predicate() ? thenValue : NoValue);
         }
 
         public static Maybe<T> If<T>(Func<bool> predicate, Maybe<T> thenValue, Maybe<T> elseValue)
         {
-            Guard.NotNull(predicate, "predicate");
+            //Guard.NotNull(predicate, "predicate");
             return new Maybe<T>(() => predicate() ? thenValue : elseValue);
         }
 
@@ -250,8 +250,8 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<T> Using<T, TResource>(Func<TResource> resourceFactory, Func<TResource, Maybe<T>> selector) where TResource : IDisposable
         {
-            Guard.NotNull(resourceFactory, "resourceFactory");
-            Guard.NotNull(selector, "selector");
+            //Guard.NotNull(resourceFactory, "resourceFactory");
+            //Guard.NotNull(selector, "selector");
 
             return new Maybe<T>(() =>
             {
@@ -262,8 +262,8 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<TResult> Using<T, TResource, TResult>(this Maybe<T> @this, Func<T, TResource> resourceSelector, Func<TResource, Maybe<TResult>> selector) where TResource : IDisposable
         {
-            Guard.NotNull(resourceSelector, "resourceSelector");
-            Guard.NotNull(selector, "selector");
+            //Guard.NotNull(resourceSelector, "resourceSelector");
+            //Guard.NotNull(selector, "selector");
 
             return @this.SelectMaybe(x =>
             {
@@ -307,7 +307,7 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<T> Or<T>(this Maybe<T> @this, Func<T> valueFactory)
         {
-            Guard.NotNull(valueFactory, "valueFactory");
+            //Guard.NotNull(valueFactory, "valueFactory");
 
             var self = @this;
             return new Maybe<T>(() => self.HasValue ? self : new Maybe<T>(valueFactory()));
@@ -315,7 +315,7 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<T> Or<T>(this Maybe<T> @this, Func<Maybe<T>> valueFactory)
         {
-            Guard.NotNull(valueFactory, "valueFactory");
+            //Guard.NotNull(valueFactory, "valueFactory");
 
             var self = @this;
             return new Maybe<T>(() => self.HasValue ? self : valueFactory());
@@ -333,8 +333,8 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<T> With<T, TSelected>(this Maybe<T> @this, Func<T, TSelected> selector, Action<TSelected> action)
         {
-            Guard.NotNull(selector, "selector");
-            Guard.NotNull(action, "action");
+            //Guard.NotNull(selector, "selector");
+            //Guard.NotNull(action, "action");
 
             var self = @this;
 
@@ -349,8 +349,8 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<T> With<T, TSelected>(this Maybe<T> @this, Func<T, Maybe<TSelected>> selector, Action<TSelected> action)
         {
-            Guard.NotNull(selector, "selector");
-            Guard.NotNull(action, "action");
+            //Guard.NotNull(selector, "selector");
+            //Guard.NotNull(action, "action");
 
             var self = @this;
 
@@ -373,7 +373,7 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<T> When<T>(this Maybe<T> @this, T value, Action<T> action)
         {
-            Guard.NotNull(action, "action");
+            //Guard.NotNull(action, "action");
 
             var self = @this;
             return new Maybe<T>(() =>
@@ -399,8 +399,8 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<T> When<T>(this Maybe<T> @this, Func<T, bool> predicate, Action<T> action)
         {
-            Guard.NotNull(predicate, "predicate");
-            Guard.NotNull(action, "action");
+            //Guard.NotNull(predicate, "predicate");
+            //Guard.NotNull(action, "action");
 
             var self = @this;
             return new Maybe<T>(() =>
@@ -414,7 +414,7 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<T> When<T>(this Maybe<T> @this, Func<T, bool> predicate, Maybe<T> newValue)
         {
-            Guard.NotNull(predicate, "predicate");
+            //Guard.NotNull(predicate, "predicate");
 
             var self = @this;
             return new Maybe<T>(() =>
@@ -428,8 +428,8 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<T> When<T>(this Maybe<T> @this, Func<T, bool> predicate, Func<T, Maybe<T>> selector)
         {
-            Guard.NotNull(predicate, "predicate");
-            Guard.NotNull(selector, "selector");
+            //Guard.NotNull(predicate, "predicate");
+            //Guard.NotNull(selector, "selector");
 
             var self = @this;
             return new Maybe<T>(() =>
@@ -468,7 +468,7 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<T> Suppress<T>(this Maybe<T> @this, Func<Exception, bool> predicate)
         {
-            Guard.NotNull(predicate, "predicate");
+            //Guard.NotNull(predicate, "predicate");
 
             var self = @this;
             return new Maybe<T>(() =>
@@ -509,7 +509,7 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<T> Suppress<T>(this Maybe<T> @this, Func<Exception, bool> predicate, T value)
         {
-            Guard.NotNull(predicate, "predicate");
+            //Guard.NotNull(predicate, "predicate");
 
             var self = @this;
             return new Maybe<T>(() =>
@@ -532,8 +532,8 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<T> Suppress<T>(this Maybe<T> @this, Func<Exception, bool> predicate, Func<Exception, Maybe<T>> selector)
         {
-            Guard.NotNull(predicate, "predicate");
-            Guard.NotNull(selector, "selector");
+            //Guard.NotNull(predicate, "predicate");
+            //Guard.NotNull(selector, "selector");
 
             var self = @this;
             return new Maybe<T>(() =>
@@ -569,7 +569,7 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<TResult> Join<T, U, TResult>(this Maybe<T> @this, Maybe<U> other, Func<T, U, TResult> selector)
         {
-            Guard.NotNull(selector, "selector");
+            //Guard.NotNull(selector, "selector");
 
             var self = @this;
             return new Maybe<TResult>(() => self.HasValue && other.HasValue
@@ -579,7 +579,7 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<TResult> Join<T, U, TResult>(this Maybe<T> @this, Maybe<U> other, Func<T, U, TResult?> selector) where TResult : struct
         {
-            Guard.NotNull(selector, "selector");
+            //Guard.NotNull(selector, "selector");
 
             var self = @this;
             return new Maybe<TResult>(() => self.HasValue && other.HasValue
@@ -589,7 +589,7 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<TResult> Join<T, U, TResult>(this Maybe<T> @this, Maybe<U> other, Func<T, U, Maybe<TResult>> selector)
         {
-            Guard.NotNull(selector, "selector");
+            //Guard.NotNull(selector, "selector");
 
             var self = @this;
             return new Maybe<TResult>(() => self.HasValue && other.HasValue
@@ -603,7 +603,7 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<T> ThrowOnNoValue<T>(this Maybe<T> @this, Exception exception)
         {
-            Guard.NotNull(exception, "exception");
+            //Guard.NotNull(exception, "exception");
 
             var self = @this;
             return new Maybe<T>(() =>
@@ -617,7 +617,7 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<T> ThrowOnNoValue<T>(this Maybe<T> @this, Func<Exception> exceptionFactory)
         {
-            Guard.NotNull(exceptionFactory, "exceptionFactory");
+            //Guard.NotNull(exceptionFactory, "exceptionFactory");
 
             var self = @this;
             return new Maybe<T>(() =>
@@ -635,7 +635,7 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<T> ThrowOn<T>(this Maybe<T> @this, T value, Exception exception)
         {
-            Guard.NotNull(exception, "exception");
+            //Guard.NotNull(exception, "exception");
 
             var self = @this;
             return new Maybe<T>(() =>
@@ -649,7 +649,7 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<T> ThrowOn<T>(this Maybe<T> @this, Func<Maybe<T>, Exception> exceptionSelector)
         {
-            Guard.NotNull(exceptionSelector, "exceptionSelector");
+            //Guard.NotNull(exceptionSelector, "exceptionSelector");
 
             var self = @this;
             return new Maybe<T>(() =>
@@ -674,7 +674,7 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static IEnumerable<T> ToEnumerable<T>(params Maybe<T>[] values)
         {
-            Guard.NotNull(values, "values");
+            //Guard.NotNull(values, "values");
             return values
                 .Where(x => x.HasValue)
                 .Select(x => x.Value);
@@ -682,7 +682,7 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static IEnumerable<T> ToEnumerable<T>(this Maybe<T> @this, IEnumerable<Maybe<T>> others)
         {
-            Guard.NotNull(others, "others");
+            //Guard.NotNull(others, "others");
 
             return new[] { @this }.Concat(others)
                 .Where(x => x.HasValue)
@@ -757,7 +757,7 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<TResult> Let<T, TResult>(this Maybe<T> @this, Func<Maybe<T>, Maybe<TResult>> func)
         {
-            Guard.NotNull(func, "func");
+            //Guard.NotNull(func, "func");
 
             var self = @this;
             return new Maybe<TResult>(() => func(self));
@@ -765,7 +765,7 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<TResult> Select<T, TResult>(this Maybe<T> @this, Func<T, TResult> selector)
         {
-            Guard.NotNull(selector, "selector");
+            //Guard.NotNull(selector, "selector");
 
             var self = @this;
 
@@ -774,7 +774,7 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<TResult> Select<T, TResult>(this Maybe<T> @this, Func<T, TResult?> selector) where TResult : struct
         {
-            Guard.NotNull(selector, "selector");
+            //Guard.NotNull(selector, "selector");
 
             var self = @this;
 
@@ -783,7 +783,7 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<TResult> TrySelect<TResult>(TrySelector<TResult> selector)
         {
-            Guard.NotNull(selector, "selector");
+            //Guard.NotNull(selector, "selector");
 
             return new Maybe<TResult>(() =>
             {
@@ -797,7 +797,7 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<TResult> TrySelect<T, TResult>(this Maybe<T> @this, TrySelector<T, TResult> selector)
         {
-            Guard.NotNull(selector, "selector");
+            //Guard.NotNull(selector, "selector");
 
             var self = @this;
 
@@ -818,7 +818,7 @@ namespace Experimental.DotNetExtensions.iSynaptic
         // the name SelectMaybe communicates better than Bind or SelectMany the semantics of the function.
         public static Maybe<TResult> SelectMaybe<T, TResult>(this Maybe<T> @this, Func<T, Maybe<TResult>> selector)
         {
-            Guard.NotNull(selector, "selector");
+            //Guard.NotNull(selector, "selector");
 
             var self = @this;
 
@@ -827,19 +827,19 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<Unit> Throw(Exception exception)
         {
-            Guard.NotNull(exception, "exception");
+            //Guard.NotNull(exception, "exception");
             return new Maybe<Unit>(() => { throw exception; });
         }
 
         public static Maybe<T> Throw<T>(Exception exception)
         {
-            Guard.NotNull(exception, "exception");
+            //Guard.NotNull(exception, "exception");
             return new Maybe<T>(() => { throw exception; });
         }
 
         public static Maybe<T> Finally<T>(this Maybe<T> @this, Action finallyAction)
         {
-            Guard.NotNull(finallyAction, "finallyAction");
+            //Guard.NotNull(finallyAction, "finallyAction");
 
             var self = @this;
             return new Maybe<T>(() =>
@@ -857,7 +857,7 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<T> OnValue<T>(this Maybe<T> @this, Action<T> action)
         {
-            Guard.NotNull(action, "action");
+            //Guard.NotNull(action, "action");
 
             var self = @this;
             return new Maybe<T>(() =>
@@ -871,7 +871,7 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<T> OnNoValue<T>(this Maybe<T> @this, Action action)
         {
-            Guard.NotNull(action, "action");
+            //Guard.NotNull(action, "action");
 
             var self = @this;
             return new Maybe<T>(() =>
@@ -885,7 +885,7 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<T> OnException<T>(this Maybe<T> @this, Action<Exception> handler)
         {
-            Guard.NotNull(handler, "handler");
+            //Guard.NotNull(handler, "handler");
             var self = @this;
 
             return new Maybe<T>(() =>
@@ -906,7 +906,7 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<T> Where<T>(this Maybe<T> @this, Func<T, bool> predicate)
         {
-            Guard.NotNull(predicate, "predicate");
+            //Guard.NotNull(predicate, "predicate");
             var self = @this;
 
             return new Maybe<T>(() =>
@@ -925,7 +925,7 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<T> Unless<T>(this Maybe<T> @this, Func<T, bool> predicate)
         {
-            Guard.NotNull(predicate, "predicate");
+            //Guard.NotNull(predicate, "predicate");
             var self = @this;
 
             return new Maybe<T>(() =>
@@ -978,7 +978,7 @@ namespace Experimental.DotNetExtensions.iSynaptic
 
         public static Maybe<T> Synchronize<T>(this Maybe<T> @this, object gate)
         {
-            Guard.NotNull(gate, "gate");
+            //Guard.NotNull(gate, "gate");
 
             var self = @this;
             return new Maybe<T>(() =>

@@ -88,7 +88,7 @@ namespace Experimental.DotNetExtensions
         /// The content of a State is the propagator function that combines a
         /// mutable state object with a value.
         /// </summary>
-        public Func<S, ValueStatePair<T, S>> Propagator { get; private set; }
+        public readonly Func<S, ValueStatePair<T, S>> Propagator;
 
         /// <summary>
         /// Constructor.
@@ -156,10 +156,12 @@ namespace Experimental.DotNetExtensions
             Contract.Requires(null != st.Propagator, "mt.Propagator");
             Contract.Requires(null != t2su, "t2mu");
 
+            var self = st;
+
             return new State<S, U>(
                 propagator: s =>
                 {
-                    var intermediate = st.Propagator(s);
+                    var intermediate = self.Propagator(s);
                     var tNuValue = intermediate.Value;
                     var sNuState = intermediate.State;
 

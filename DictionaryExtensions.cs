@@ -105,10 +105,9 @@ namespace Experimental.DotNetExtensions
 
             V retreived = default(V);
 
-            return theDictionary
-                .ToMaybe()
-                .Where(d => d.TryGetValue(key, out retreived))
-                .Select(_ => retreived);
+            return theDictionary.TryGetValue(key, out retreived) 
+                ? new Maybe<V>(retreived)
+                : Maybe<V>.NoValue;
         }
 
         /// <summary>
@@ -141,7 +140,7 @@ namespace Experimental.DotNetExtensions
                         // with a propagator that UNCONDITIONALLY puts the kvp in 
                         // the dictionary, and reports whether the key was already
                         // present . . .
-#if (true)
+#if (false)
                         propagator: dict => ValueStatePair.Create(dict
                         // TODO: Investigate intermittent stress failure of the Maybe monad!
                             // via the Maybe monad . . .
@@ -161,8 +160,12 @@ namespace Experimental.DotNetExtensions
                         {
                             var value = default(V);
                             var hasValue = dict.TryGetValue(kvp.Key, out value);
-                            dict[kvp.Key] = kvp.Value;
-                            return Tuple.Create(hasValue, dict);
+                            if (hasValue)
+                                dict[kvp.Key] = kvp.Value;
+                            else
+                                dict.Add(key: kvp.Key, value: kvp.Value);
+
+                            return ValueStatePair.Create(hasValue, dict);
                         }))
 #endif
                 // Apply the newly bound state to the input dictionary . . .
@@ -229,7 +232,7 @@ namespace Experimental.DotNetExtensions
                         // with a propagator that CONDITIONALLY puts the kvp in 
                         // the dictionary, and reports whether the key was already
                         // present . . .
-#if (true)
+#if (false)
                         propagator: dict => ValueStatePair.Create(dict
                         // TODO: investigate failure of the Maybe monad!
                             // via the Maybe monad . . .
@@ -248,8 +251,8 @@ namespace Experimental.DotNetExtensions
                             var value = default(V);
                             var hasValue = dict.TryGetValue(kvp.Key, out value);
                             if (!hasValue)
-                                dict[kvp.Key] = kvp.Value;
-                            return Tuple.Create(hasValue, dict);
+                                dict.Add(key: kvp.Key, value: kvp.Value);
+                            return ValueStatePair.Create(hasValue, dict);
                         }))
 #endif
                 // Apply the newly bound state to the input dictionary . . .
