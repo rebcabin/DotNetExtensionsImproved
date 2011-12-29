@@ -1,0 +1,10 @@
+*.suo
+*.user
+*.vs10x
+*.docstates
+*.dotcover
+bin/
+obj/
+Build/
+_ReSharper.*/
+TestResults/

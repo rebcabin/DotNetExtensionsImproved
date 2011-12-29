@@ -6,6 +6,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetExtensionsTests", "DotNetExtensionsTestProject1\DotNetExtensionsTests.csproj", "{FACE70D1-ED03-498F-95ED-673E514229DE}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{60A996A6-0AE6-4C49-94FF-094A3B3A1B61}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Viterbi", "Viterbi\Viterbi.csproj", "{021A5039-3860-49DB-9D6F-B2B8C14497A8}"
 EndProject

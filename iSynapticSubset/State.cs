@@ -30,6 +30,48 @@ using System.Diagnostics.Contracts;
 
 namespace Experimental.DotNetExtensions
 {
+
+    /// <summary>
+    /// Factory class for ValueStatePair<T, S> objects
+    /// </summary>
+    public static class ValueStatePair
+    {
+        /// <summary>
+        /// Creates a value-state pair
+        /// </summary>
+        /// <typeparam name="T">The type of the value object.</typeparam>
+        /// <typeparam name="S">The type of the state object.</typeparam>
+        /// <param name="value">The value object to store in the pair.</param>
+        /// <param name="state">The state object to store in the pair.</param>
+        /// <returns>The newly created value-state pair.</returns>
+        public static ValueStatePair<T, S> Create<T, S>(T value, S state)
+        {
+            return new ValueStatePair<T, S>(value, state);
+        }
+    }
+    /// <summary>
+    /// Represents a tuple of a value and state.
+    /// </summary>
+    /// <typeparam name="T">The type of the value object.</typeparam>
+    /// <typeparam name="S">The type of the state object.</typeparam>
+    public struct ValueStatePair<T, S>
+    {
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="value">The value object to store in the pair.</param>
+        /// <param name="state">The state object to store in the pair.</param>
+        public ValueStatePair(T value, S state)
+            : this()
+        {
+            Value = value;
+            State = state;
+        }
+
+        public T Value { get; private set; }
+        public S State { get; private set; }
+    }
+
     /// <summary>
     /// Encapsulates a propagator transform that combines a mutable state object 
     /// with a value, usually via closure.
@@ -46,13 +88,13 @@ namespace Experimental.DotNetExtensions
         /// The content of a State is the propagator function that combines a
         /// mutable state object with a value.
         /// </summary>
-        public Func<S, Tuple<T, S>> Propagator { get; private set; }
+        public readonly Func<S, ValueStatePair<T, S>> Propagator;
 
         /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="propagator">The input propagator.</param>
-        public State(Func<S, Tuple<T, S>> propagator)
+        public State(Func<S, ValueStatePair<T, S>> propagator)
             : this()
         {
             Contract.Requires(null != propagator, "propagator");
@@ -77,7 +119,7 @@ namespace Experimental.DotNetExtensions
         public static State<S, T> Return<S, T>(T value)
         {
             // value is allowed to be null, but it's better if it's a Maybe (TODO)!
-            return new State<S, T>(propagator: s => Tuple.Create(value, s));
+            return new State<S, T>(propagator: s => ValueStatePair.Create(value, s));
         }
 
         // Conventionally, in LINQ, the monadic "return" operator is written "To...,"
@@ -114,12 +156,14 @@ namespace Experimental.DotNetExtensions
             Contract.Requires(null != st.Propagator, "mt.Propagator");
             Contract.Requires(null != t2su, "t2mu");
 
+            var self = st;
+
             return new State<S, U>(
                 propagator: s =>
                 {
-                    var intermediate = st.Propagator(s);
-                    var tNuValue = intermediate.Item1;
-                    var sNuState = intermediate.Item2;
+                    var intermediate = self.Propagator(s);
+                    var tNuValue = intermediate.Value;
+                    var sNuState = intermediate.State;
 
                     return t2su(tNuValue).Propagator(sNuState);
                 });
