@@ -103,7 +103,6 @@ namespace DotNetExtensionsTestProject1
             Assert.AreEqual(maybe.Value, "c");
 
             maybe = TestDictionary.TryGetValue(5);
-            Assert.IsNull(maybe.Exception);
             Assert.IsFalse(maybe.HasValue);
 
             dict.Clear();
@@ -158,7 +157,6 @@ namespace DotNetExtensionsTestProject1
             Assert.AreEqual(maybe.Value, "e");
 
             maybe = TestDictionary.TryGetValue(5);
-            Assert.IsNull(maybe.Exception);
             Assert.IsFalse(maybe.HasValue);
 
             dict.Clear();

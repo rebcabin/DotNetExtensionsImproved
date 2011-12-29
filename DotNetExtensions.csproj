@@ -77,10 +77,11 @@
     <Compile Include="CastExtensions.cs" />
     <Compile Include="DictionaryExtensions.cs" />
     <Compile Include="EnumerableExtensions.cs" />
-    <Compile Include="iSynapticSubset\FuncExtensions.cs" />
     <Compile Include="iSynapticSubset\IMaybe.cs" />
     <Compile Include="iSynapticSubset\Maybe.cs" />
     <Compile Include="iSynapticSubset\State.cs" />
+    <Compile Include="iSynapticSubset\TrySelector.cs" />
+    <Compile Include="iSynapticSubset\Unit.cs" />
     <Compile Include="Numerics.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
