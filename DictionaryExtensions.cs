@@ -103,10 +103,10 @@ namespace Experimental.DotNetExtensions
         {
             //Contract.Requires(null != theDictionary, "theDictionary");
 
-            V retreived = default(V);
+            V retrieved = default(V);
 
-            return theDictionary.TryGetValue(key, out retreived) 
-                ? new Maybe<V>(retreived)
+            return theDictionary.TryGetValue(key, out retrieved) 
+                ? new Maybe<V>(retrieved)
                 : Maybe<V>.NoValue;
         }
 
