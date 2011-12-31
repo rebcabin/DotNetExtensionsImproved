@@ -105,10 +105,9 @@ namespace Experimental.DotNetExtensions
 
             V retreived = default(V);
 
-            return theDictionary
-                .ToMaybe()
-                .Where(d => d.TryGetValue(key, out retreived))
-                .Select(_ => retreived);
+            return theDictionary.TryGetValue(key, out retreived) 
+                ? new Maybe<V>(retreived)
+                : Maybe<V>.NoValue;
         }
 
         /// <summary>
@@ -125,7 +124,7 @@ namespace Experimental.DotNetExtensions
         {
             Contract.Requires(theDictionary != null);
 
-#if (true)
+#if (false)
             theDictionary[keyValuePair.Key] = keyValuePair.Value;
             return theDictionary;
 #else
@@ -141,9 +140,9 @@ namespace Experimental.DotNetExtensions
                         // with a propagator that UNCONDITIONALLY puts the kvp in 
                         // the dictionary, and reports whether the key was already
                         // present . . .
+#if (false)
+                        propagator: dict => ValueStatePair.Create(dict
                         // TODO: Investigate intermittent stress failure of the Maybe monad!
-#if (true)
-                        propagator: dict => Tuple.Create(dict
                             // via the Maybe monad . . .
                             .TryGetValue(kvp.Key)
                             // if the value was not in the dictionary, add it . . .
@@ -151,7 +150,7 @@ namespace Experimental.DotNetExtensions
                             // if the value was in the dictionary, replace it . . .
                             .OnValue(_ => dict[kvp.Key] = kvp.Value)
                             // be thread-safe . . .
-                            .SynchronizeWith(dict)
+                            .Synchronize(dict)
                             // provide the bool . . .
                             .HasValue,
                             // and the original dictionary.
@@ -161,14 +160,18 @@ namespace Experimental.DotNetExtensions
                         {
                             var value = default(V);
                             var hasValue = dict.TryGetValue(kvp.Key, out value);
-                            dict[kvp.Key] = kvp.Value;
-                            return Tuple.Create(hasValue, dict);
+                            if (hasValue)
+                                dict[kvp.Key] = kvp.Value;
+                            else
+                                dict.Add(key: kvp.Key, value: kvp.Value);
+
+                            return ValueStatePair.Create(hasValue, dict);
                         }))
 #endif
                 // Apply the newly bound state to the input dictionary . . .
                 .Propagator(theDictionary)
                 // Extract the dictionary from the tuple and return it:
-                .Item2
+                .State
                 ;
 
             // Sadly, the bool info about whether the key was in the dictionary
@@ -209,7 +212,7 @@ namespace Experimental.DotNetExtensions
         {
             Contract.Requires(theDictionary != null);
 
-#if (true)
+#if (false)
             var value = default(V);
             var hasValue = theDictionary.TryGetValue(kvpInput.Key, out value);
             if (!hasValue)
@@ -229,15 +232,15 @@ namespace Experimental.DotNetExtensions
                         // with a propagator that CONDITIONALLY puts the kvp in 
                         // the dictionary, and reports whether the key was already
                         // present . . .
-                        // TODO: investigate failure of the Maybe monad!
 #if (false)
-                        propagator: dict => Tuple.Create(dict
+                        propagator: dict => ValueStatePair.Create(dict
+                        // TODO: investigate failure of the Maybe monad!
                             // via the Maybe monad . . .
                             .TryGetValue(kvp.Key)
                             // if the value was not in the dictionary, add it . . .
                             .OnNoValue(() => dict.Add(key: kvp.Key, value: kvp.Value))
                             // be thread safe . . .
-                            .SynchronizeWith(dict)
+                            .Synchronize(dict)
                             // provide the bool . . .
                             .HasValue, 
                             // and the original dictionary.
@@ -248,14 +251,14 @@ namespace Experimental.DotNetExtensions
                             var value = default(V);
                             var hasValue = dict.TryGetValue(kvp.Key, out value);
                             if (!hasValue)
-                                dict[kvp.Key] = kvp.Value;
-                            return Tuple.Create(hasValue, dict);
+                                dict.Add(key: kvp.Key, value: kvp.Value);
+                            return ValueStatePair.Create(hasValue, dict);
                         }))
 #endif
                 // Apply the newly bound state to the input dictionary . . .
                 .Propagator(theDictionary)
                 // Extract the dictionary from the tuple and return it:
-                .Item2
+                .State
                 ;
 
             // Sadly, the info about whether the key was in the dictionary
